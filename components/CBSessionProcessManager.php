@@ -56,15 +56,15 @@ class CBSessionProcessManager extends CApplicationComponent
 	 */
 	public function beginProcess($processId)
 	{
-		if (empty($_SESSION[$this->name.':'.$processId])) {
+		$key = $this->name.':'.$processId;
+
+		if (empty($_SESSION[$key])) {
 			throw new CException('Unregistered process '.$processId);
 		}
 
-		$process =& $_SESSION[$this->name.':'.$processId];
-
-		switch ($process['state']) {
+		switch ($_SESSION[$key]) {
 		case self::STATE_FUTURE:
-			$process['state'] = self::STATE_RUNNING;
+			$_SESSION[$key] = self::STATE_RUNNING;
 			break;
 		case self::STATE_RUNNING:
 			throw new CException('Process '.$processId.' is already running');
