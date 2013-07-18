@@ -62,12 +62,14 @@ class CBSessionProcessManager extends CApplicationComponent
 			throw new CException('Unregistered process '.$processId);
 		}
 
-		switch ($_SESSION[$key]) {
+		switch ($_SESSION[$key]['state']) {
 		case self::STATE_FUTURE:
-			$_SESSION[$key] = self::STATE_RUNNING;
+			$_SESSION[$key]['state'] = self::STATE_RUNNING;
 			break;
+
 		case self::STATE_RUNNING:
 			throw new CException('Process '.$processId.' is already running');
+
 		case self::STATE_COMPLETED:
 			throw new CException('Process '.$processId.' is already completed');
 		}
@@ -85,26 +87,28 @@ class CBSessionProcessManager extends CApplicationComponent
 	 */
 	public function completeProcess($processId)
 	{
-		if (empty($_SESSION[$this->name.':'.$processId])) {
+		$key = $this->name.':'.$processId;
+
+		if (empty($_SESSION[$key])) {
 			throw new CException('Unregistered process '.$processId);
 		}
 
-		$process =& $_SESSION[$this->name.':'.$processId];
-
-		switch ($process['state']) {
+		switch ($_SESSION[$key]['state']) {
 		case self::STATE_FUTURE:
 			throw new CException('Process '.$processId.' never started');
+
 		case self::STATE_RUNNING:
-			$process['state'] = self::STATE_COMPLETED;
+			$_SESSION[$key]['state'] = self::STATE_COMPLETED;
 			break;
+
 		case self::STATE_COMPLETED:
 			throw new CException('Process '.$processId.' is already completed');
 		}
 
 		// Run all queued calls
-		while (count($process['queue'])) {
+		while (count($_SESSION[$key]['queue'])) {
 			// Extract call from queue for ever
-			$call = array_shift($process['queue']);
+			$call = array_shift($_SESSION[$key]['queue']);
 			// Execute
 			$this->executeCall($processId, $call['methodName'], $call['callbackData']);
 		}
@@ -127,16 +131,16 @@ class CBSessionProcessManager extends CApplicationComponent
 			throw new CException(get_class($this).' does not have a method called '.$methodName);
 		}
 
-		$process =& $_SESSION[$this->name.':'.$processId];
+		$key = $this->name.':'.$processId;
 
-		if ($process['state'] == self::STATE_COMPLETED) {
+		if ($_SESSION[$key]['state'] == self::STATE_COMPLETED) {
 			// Process is already complete, execute immediately
 			$this->executeCall($processId, $methodName, $callbackData);
 			return;
 		}
 
 		// Process is not completed yet, defer execution of method
-		$process['queue'][] = array(
+		$_SESSION[$key]['queue'][] = array(
 			'methodName' => $methodName,
 			'callbackData' => $callbackData
 		);
