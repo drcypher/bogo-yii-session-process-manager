@@ -38,8 +38,8 @@ class CBSessionProcessManager extends CApplicationComponent
 		parent::init();
 
 		foreach ($this->processIds as $processId) {
-			if (!isset($_SESSION[$this->name][$processId])) {
-				$_SESSION[$this->name][$processId] = array(
+			if (!isset($_SESSION[$this->name.':'.$processId])) {
+				$_SESSION[$this->name.':'.$processId] = array(
 					'state' => self::STATE_FUTURE,
 					'queue' => array(),
 				);
@@ -56,11 +56,11 @@ class CBSessionProcessManager extends CApplicationComponent
 	 */
 	public function beginProcess($processId)
 	{
-		if (empty($_SESSION[$this->name][$processId])) {
+		if (empty($_SESSION[$this->name.':'.$processId])) {
 			throw new CException('Unregistered process '.$processId);
 		}
 
-		$process =& $_SESSION[$this->name][$processId];
+		$process =& $_SESSION[$this->name.':'.$processId];
 
 		switch ($process['state']) {
 		case self::STATE_FUTURE:
@@ -85,11 +85,11 @@ class CBSessionProcessManager extends CApplicationComponent
 	 */
 	public function completeProcess($processId)
 	{
-		if (empty($_SESSION[$this->name][$processId])) {
+		if (empty($_SESSION[$this->name.':'.$processId])) {
 			throw new CException('Unregistered process '.$processId);
 		}
 
-		$process =& $_SESSION[$this->name][$processId];
+		$process =& $_SESSION[$this->name.':'.$processId];
 
 		switch ($process['state']) {
 		case self::STATE_FUTURE:
@@ -127,7 +127,7 @@ class CBSessionProcessManager extends CApplicationComponent
 			throw new CException(get_class($this).' does not have a method called '.$methodName);
 		}
 
-		$process =& $_SESSION[$this->name][$processId];
+		$process =& $_SESSION[$this->name.':'.$processId];
 
 		if ($process['state'] == self::STATE_COMPLETED) {
 			// Process is already complete, execute immediately
